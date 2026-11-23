@@ -9,12 +9,12 @@ Qizlar uchun 3 yo'lakli cheksiz yugurish o'yini. Bosh qahramon — **Zeyn**, yon
 |---|---|---|
 | Yo'lak almashtirish | chapga / o'ngga svayp | ← → yoki A / D |
 | Sakrash | yuqoriga svayp yoki bosish | ↑, W yoki Space |
-| Engashish | pastga svayp | ↓ yoki S |
+| Dumalash (engashish) | pastga svayp | ↓ yoki S |
 | Pauza / ovoz | ❚❚ tugmasi | P / Esc, M |
 
 ## To'siqlar
 - **Arava** va **qovun uyumi** — ustidan sakrang yoki yo'lak almashtiring.
-- **"BOZOR" soyaboni** — tagidan engashib o'ting.
+- **"BOZOR" soyaboni** — tagidan dumalab o'ting.
 - **Avtobus** — sakrab bo'lmaydi, boshqa yo'lakka o'ting.
 
 ## Bonuslar

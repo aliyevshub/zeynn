@@ -149,11 +149,11 @@
 <script>
 (() => {
   // ====================== asosiy o'lchamlar ======================
-  const W = 400, H = 720, HY = 250;          // HY — ufq chizig'i
-  const CAMH = 1.6, F = 1219, ZP = 5;        // kamera balandligi, fokus, Zeynning chuqurligi
+  const W = 400, H = 720, HY = 236;          // HY — ufq chizig'i
+  const CAMH = 1.15, F = 1828, ZP = 5;       // kamera balandligi, fokus, Zeynning chuqurligi
   const LW = 0.5, ROAD = 0.78;               // yo'lak oralig'i, yo'l yarim kengligi
   const SPAWN_Z = 58, NEAR_Z = 1.2;
-  const PS = F / ZP;                          // Zeyn chuqurligidagi masshtab
+  const PS = 243.8;                           // rasmlar uchun asosiy masshtab (kamera yaqinlashgani uchun hammasi 1.5x katta)
   const cvs = document.getElementById('c'), ctx = cvs.getContext('2d');
   const $ = id => document.getElementById(id);
 
@@ -260,6 +260,24 @@
     c.restore();
   }
 
+  // ---- dumalash: g'ujanak to'p, ustidagi belgilar oldinga aylanadi ----
+  function rollBall(c, Rr, phase, base, edge, feats) {
+    c.save(); c.translate(0, -Rr);
+    c.beginPath(); c.arc(0, 0, Rr, 0, 7); fs(c, rg(c, -Rr * .35, -Rr * .4, Rr * .1, Rr * 1.1, [[0, base[0]], [1, base[1]]]), 2.6);
+    c.save(); c.beginPath(); c.arc(0, 0, Rr - 1.5, 0, 7); c.clip();
+    for (const f of feats) {
+      const a = f.a + phase, ca = Math.cos(a);
+      if (ca <= .05) continue;
+      const y = -Rr * Math.sin(a) * .92;
+      c.save(); c.translate(f.x || 0, y); c.scale(1, Math.max(.15, ca));
+      f.draw(c); c.restore();
+    }
+    c.restore();
+    c.strokeStyle = 'rgba(255,255,255,.5)'; c.lineWidth = 4; c.beginPath(); c.arc(0, 0, Rr * .72, Math.PI * 1.15, Math.PI * 1.5); c.stroke();
+    c.beginPath(); c.arc(0, 0, Rr, 0, 7); c.strokeStyle = edge; c.lineWidth = 2.6; c.stroke();
+    c.restore();
+  }
+
   // ---- Zeyn orqadan (yugurish) ----
   function zeynBack(c, x, y, s, t, pose, alpha = 1) {
     const D = pick('dress', save.dress), HR = pick('hair', save.hair).c, SKIN = '#ffe2cf';
@@ -267,7 +285,23 @@
     const ph = t * 12, run = pose === 'run';
     const bob = run ? -Math.abs(Math.sin(ph)) * 7 : 0;
     // soya
-    if (pose === 'slide') { c.translate(0, 40); c.scale(1.08, .62); }
+    if (pose === 'slide') {
+      const HR2 = HR, ph2 = -t * 15, Rr = 54;
+      // tuflilar pastdan chiqib turadi
+      for (const d of [-1, 1]) { c.beginPath(); c.ellipse(d * 30, -8, 14, 9, d * .3, 0, 7); fs(c, '#e9609c', 2); c.fillStyle = '#fff'; c.fillRect(d * 30 - 8, -18, 16, 5); }
+      rollBall(c, Rr, ph2, [HR2[0], HR2[2]], OL, [
+        { a: 0, draw: k => { k.strokeStyle = 'rgba(255,225,190,.35)'; k.lineWidth = 4; k.beginPath(); k.arc(0, 10, 34, Math.PI * 1.15, Math.PI * 1.6); k.stroke(); } },
+        { a: .55, draw: k => tiara(k, 0, 0, .95) },
+        { a: -1.0, draw: k => { k.fillStyle = D.c[1]; k.beginPath(); k.ellipse(0, 0, 56, 26, 0, 0, 7); k.fill(); k.strokeStyle = '#fff'; k.lineWidth = 3; k.beginPath(); for (let i = 0; i < 7; i++) { const x0 = -52 + i * 15; k.moveTo(x0, 18); k.quadraticCurveTo(x0 + 7.5, 25, x0 + 15, 18); } k.stroke(); } },
+        { a: -1.35, draw: k => { k.fillStyle = '#b48cff'; for (const d of [-1, 1]) { k.beginPath(); k.ellipse(d * 14, 0, 14, 8, 0, 0, 7); k.fill(); } k.fillStyle = '#e6d6ff'; k.beginPath(); k.arc(0, 0, 5, 0, 7); k.fill(); } },
+        ...[1.6, 2.6, 3.6, 4.6].map(a => ({ a, draw: k => { k.strokeStyle = 'rgba(40,20,10,.4)'; k.lineWidth = 2.5; for (const d of [-22, 0, 22]) { k.beginPath(); k.moveTo(d - 6, -6); k.quadraticCurveTo(d, 0, d + 6, 6); k.stroke(); } } }))
+      ]);
+      // tizzani quchoqlagan qo'llar yonlarda
+      for (const d of [-1, 1]) { c.beginPath(); c.ellipse(d * (Rr - 4), -Rr * .9, 9, 14, d * .4, 0, 7); fs(c, '#ffe2cf', 2); }
+      // chang
+      c.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 3; i++) { const r = 8 + ((t * 40 + i * 9) % 14); c.globalAlpha = alpha * (1 - ((t * 40 + i * 9) % 14) / 14); c.beginPath(); c.arc(-40 + i * 40, -4, r, 0, 7); c.fill(); }
+      c.restore(); return;
+    }
     if (pose === 'fall') { c.rotate(.9); }
     c.translate(0, bob + (pose === 'jump' ? -10 : 0));
     // oyoqlar
@@ -416,7 +450,15 @@
     c.fillStyle = 'rgba(60,30,60,.2)'; c.beginPath(); c.ellipse(0, 2, 32, 7, 0, 0, 7); c.fill();
     const ph = t * 14, run = pose === 'run';
     c.translate(0, run ? -Math.abs(Math.sin(ph)) * 6 : pose === 'jump' ? -8 : 0);
-    if (pose === 'slide') { c.translate(0, 12); c.scale(1.12, .72); }
+    if (pose === 'slide') {
+      for (const d of [-1, 1]) { c.beginPath(); c.moveTo(d * 8, -46); c.lineTo(d * 18, -62); c.lineTo(d * 22, -40); c.closePath(); fs(c, CW[0], 2); c.fillStyle = '#ffb3c8'; c.beginPath(); c.moveTo(d * 11, -46); c.lineTo(d * 18, -56); c.lineTo(d * 19, -44); c.closePath(); c.fill(); }
+      for (const d of [-1, 1]) { c.beginPath(); c.ellipse(d * 16, -4, 8, 6, 0, 0, 7); fs(c, '#fff', 2); }
+      rollBall(c, 26, -t * 18, ['#ffffff', CW[2]], OL, [
+        { a: -.8, draw: k => { k.strokeStyle = col; k.lineWidth = 5; k.beginPath(); k.moveTo(-18, 0); k.lineTo(18, 0); k.stroke(); } },
+        { a: 2.6, draw: k => { k.strokeStyle = CW[2]; k.lineWidth = 7; k.lineCap = 'round'; k.beginPath(); k.moveTo(-10, 0); k.quadraticCurveTo(0, -8, 12, 0); k.stroke(); } }
+      ]);
+      c.restore(); return;
+    }
     // orqa oyoqlar — ko'tarilganda pushti yostiqchalar ko'rinadi
     for (const k of [-1, 1]) {
       const lift = run ? Math.max(0, Math.sin(ph + (k > 0 ? Math.PI : 0))) : 0;
@@ -573,7 +615,7 @@
     slideT = Math.max(0, slideT - dt);
 
     // Chom ergashadi
-    const cTarget = px + (lane >= 1 ? -.27 : .27);
+    const cTarget = px + (lane >= 1 ? -.3 : .3);
     chom.x += (cTarget - chom.x) * Math.min(1, dt * 8);
     if (chom.jumpAt > 0 && time >= chom.jumpAt) { chom.vy = shoes > 0 ? 3 : 2.2; chom.jumpAt = -1; if (Math.random() < .25) meow(); }
     if (chom.y > 0 || chom.vy > 0) { chom.vy -= 8.2 * dt; chom.y += chom.vy * dt; if (chom.y <= 0) { chom.y = 0; chom.vy = 0; } }
@@ -828,21 +870,21 @@
   }
 
   function drawPlayers() {
-    const zp = P(px, py, ZP), s = zp.s / PS * .5;
+    const zp = P(px, py, ZP), s = zp.s / PS * .5; const tagS = Math.min(1.15, s / .5);
     const pose = state === 'dead' ? 'fall' : slideT > 0 ? 'slide' : !grounded ? 'jump' : 'run';
     const blink = inv > 0 && Math.floor(time * 12) % 2 === 0;
     const gp = P(px, 0, ZP);
     // Chom
     const cp = P(chom.x, chom.y, ZP - .05), cs = cp.s / PS * .5;
     const cpose = state === 'dead' ? 'sit' : chom.slideT > 0 ? 'slide' : chom.y > 0 ? 'jump' : 'run';
-    const drawChom = () => { chomBack(ctx, cp.x, cp.y, cs * 1.05, time, state === 'play' ? cpose : 'idle'); nameTag(ctx, cp.x, cp.y - 120 * cs * 1.05, 'Chom', .8 * cs / .5); };
+    const drawChom = () => { chomBack(ctx, cp.x, cp.y, cs * 1.05, time, state === 'play' ? cpose : 'idle'); nameTag(ctx, cp.x, cp.y - (cpose === 'slide' ? 80 : 120) * cs * 1.05, 'Chom', Math.min(.95, .8 * cs / .5)); };
     if (chom.x > px) { if (!blink) drawZeynAt(); drawChom(); } else { drawChom(); if (!blink) drawZeynAt(); }
     function drawZeynAt() {
       // yerdagi soya Zeyn sakraganda ham yerda qoladi
       ctx.fillStyle = 'rgba(60,30,60,.18)'; ctx.beginPath(); ctx.ellipse(gp.x, gp.y, 46 * s, 9 * s, 0, 0, 7); ctx.fill();
       zeynBack(ctx, zp.x, zp.y, s, time, state === 'menu' || state === 'shop' ? 'run' : pose);
       if (shield) { ctx.strokeStyle = `rgba(124,200,255,${.6 + Math.sin(time * 6) * .2})`; ctx.lineWidth = 3; ctx.fillStyle = 'rgba(124,200,255,.15)'; ctx.beginPath(); ctx.ellipse(zp.x, zp.y - 140 * s, 80 * s, 160 * s, 0, 0, 7); ctx.fill(); ctx.stroke(); }
-      nameTag(ctx, zp.x, zp.y - (pose === 'slide' ? 190 : 312) * s, 'Zeyn', s / .5);
+      nameTag(ctx, zp.x, zp.y - (pose === 'slide' ? 140 : 312) * s, 'Zeyn', tagS);
     }
   }
 
